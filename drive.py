@@ -3,6 +3,8 @@ import base64
 from datetime import datetime
 import os
 import shutil
+import threading
+from msvcrt import getch
 
 import numpy as np
 import socketio
@@ -11,6 +13,8 @@ import eventlet.wsgi
 from PIL import Image
 from flask import Flask
 from io import BytesIO
+
+from preprocess import preprocess
 
 from keras.models import load_model
 import h5py
@@ -44,9 +48,8 @@ class SimplePIController:
 
 
 controller = SimplePIController(0.1, 0.002)
-set_speed = 9
+set_speed = 30
 controller.set_desired(set_speed)
-
 
 @sio.on('telemetry')
 def telemetry(sid, data):
@@ -61,6 +64,7 @@ def telemetry(sid, data):
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
         image_array = np.asarray(image)
+        image_array = preprocess(image_array)
         steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
 
         throttle = controller.update(float(speed))
@@ -93,6 +97,24 @@ def send_control(steering_angle, throttle):
         },
         skip_sid=True)
 
+
+socket = eventlet.listen(('', 4567))
+pool = eventlet.GreenPool(11)
+
+def key_listener():
+    lock = threading.Lock()
+    while True:
+        with lock:
+            key = getch()
+        if key in (b' ', b'\x1b'):
+            shutdown()
+            break
+
+def shutdown():
+    pool.resize(0)
+    socket.close()
+    pool.waitall()
+    print("Shutdown")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Remote Driving')
@@ -135,5 +157,8 @@ if __name__ == '__main__':
     # wrap Flask application with engineio's middleware
     app = socketio.Middleware(sio, app)
 
+    key_listener_thread = threading.Thread(target = key_listener)
+    key_listener_thread.start()
+
     # deploy as an eventlet WSGI server
-    eventlet.wsgi.server(eventlet.listen(('', 4567)), app)
+    eventlet.wsgi.server(socket, app, custom_pool=pool)

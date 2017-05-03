@@ -1,0 +1,8 @@
+*.p
+*.h5
+
+.vscode/
+data/
+windows_sim/
+training_data/
+__pycache__/
