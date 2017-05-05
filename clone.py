@@ -116,8 +116,6 @@ class TrainData:
         self.images = pickle.load(open('images.p', 'rb'))
         self.steer = pickle.load(open('steer.p', 'rb'))
 
-
-
 def get_csv_len(csv_filename):
     with open(csv_filename, 'r') as f:
         reader = csv.reader(f)
@@ -125,7 +123,7 @@ def get_csv_len(csv_filename):
         row_count = len(data)
     return(row_count)
 
-def read_train_data_folder(train_data, folder):
+def read_train_data_folder(train_data, folder, min_speed=15):
     print('.read train data folder:',folder)
     csv_filename = '{}/{}/driving_log.csv'.format(_training_data_root, folder)
     csv_len = get_csv_len(csv_filename)
@@ -135,7 +133,7 @@ def read_train_data_folder(train_data, folder):
         reader = csv.reader(csvfile)
         header = next(reader)
         for line in reader:
-            if float(line[6])<25:
+            if float(line[6])<min_speed:
                 continue
             images = []
             for image_name in line[:3]:
@@ -155,7 +153,7 @@ def read_train_data(train_data, folders):
 
 train_data = TrainData()
 
-_reload_data = False
+_reload_data = True
 
 if _reload_data:
     #read_train_data(train_data,['1'])
@@ -166,15 +164,17 @@ if _reload_data:
     # read_train_data(train_data,['4'])
     # read_train_data(train_data,['5'])
 
-    read_train_data(train_data,['11'])
-    read_train_data(train_data,['11_rev'])
-    read_train_data(train_data,['11_bridge'])
-    read_train_data(train_data,['11_right'])
-    read_train_data(train_data,['11_right'])
-    read_train_data(train_data,['11_left'])
+    # read_train_data(train_data,['11'])
+    # read_train_data(train_data,['11_rev'])
+    # read_train_data(train_data,['11_bridge'])
+    # read_train_data(train_data,['11_right'])
+    # read_train_data(train_data,['11_right'])
+    # read_train_data(train_data,['11_left'])
 
-    read_train_data(train_data,['21'])
+    # read_train_data(train_data,['21'])
     # read_train_data(train_data,['21_rev'])
+
+    read_train_data(train_data,['j1'])
 
     train_data.preprocess()
     train_data.pickle()
@@ -219,7 +219,7 @@ model.compile(loss='mse', optimizer='adam')
 
 print(model.summary())
 
-model.fit(X_train, y_train, validation_split=0.2, shuffle=True, epochs=17)
+model.fit(X_train, y_train, validation_split=0.2, shuffle=True, epochs=8)
 
 model.save('model.h5')
 

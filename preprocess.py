@@ -13,7 +13,7 @@ def img_rgb2HLS(img):
     labImg = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
     return labImg
 
-_resize_factor = 4
+_resize_factor = 2
 
 def img_resize(img):
     img = cv2.resize(img, (int(img.shape[1]/_resize_factor), int(img.shape[0]/_resize_factor)))
@@ -49,6 +49,7 @@ def preprocess(img):
     img = img_crop(img)
     img = img_rgb2HLS(img)
     img = img_normalize(img)
+    img_unsharp_mask(img)
     img=img-0.5
     if len(img.shape)==2:
         img = img[:,:,None]
