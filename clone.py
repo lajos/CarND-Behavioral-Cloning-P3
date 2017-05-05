@@ -76,7 +76,7 @@ class TrainData:
             np.zeros(len(self.steer))-side_steer)
         return (images, steer)
 
-    def get_train_data_straight_augmented(self, correction=0.6, correction_range=0.01, c2=1.01):
+    def get_train_data_straight_augmented(self, correction=0.6, correction_range=0.01):
         images = []
         steer = []
         center_steer_correction = correction
@@ -91,24 +91,17 @@ class TrainData:
                 if correction_range>0:
                     c=random.uniform(correction-correction_range, correction+correction_range)
                 images.append(self.images[1][i])
-                steer.append(center_steer_correction)
+                steer.append(c)
                 images.append(self.images[2][i])
-                steer.append(-center_steer_correction)
-                pass
+                steer.append(-c)
             else:
                 n_with_steer+=1
                 images.append(self.images[0][i])
                 steer.append(self.steer[i])
                 images.append(np.fliplr(self.images[0][i]))
                 steer.append(-self.steer[i])
-                # if self.steer[i]>3.0:
-                #     images.append(self.images[1][i])
-                #     steer.append(self.steer[i]*c2)
-                # if self.steer[i]<-3.0:
-                #     images.append(self.images[2][i])
-                #     steer.append(self.steer[i]*c2)
 
-        print('    no steer samples    :',n_with_steer)
+        print('    no steer samples    :',n_zero_steer)
         print('    with steer samples  :',n_with_steer)
         print('    augmented samples   :',len(steer))
         return(np.array(images), np.array(steer))
@@ -162,7 +155,7 @@ def read_train_data(train_data, folders):
 
 train_data = TrainData()
 
-_reload_data = False
+_reload_data = True
 
 if _reload_data:
     #read_train_data(train_data,['1'])
@@ -172,10 +165,20 @@ if _reload_data:
     # read_train_data(train_data,['3'])
     # read_train_data(train_data,['4'])
     # read_train_data(train_data,['5'])
+
     read_train_data(train_data,['11'])
     read_train_data(train_data,['11_rev'])
     read_train_data(train_data,['11_bridge'])
+    read_train_data(train_data,['11_bridge_adjust'])
+    read_train_data(train_data,['11_bridge_adjust'])
+    read_train_data(train_data,['11_bridge_adjust'])
     read_train_data(train_data,['11_right'])
+    read_train_data(train_data,['11_right'])
+    read_train_data(train_data,['11_left'])
+
+    # read_train_data(train_data,['21'])
+    # read_train_data(train_data,['21_rev'])
+
     train_data.preprocess()
     train_data.pickle()
 else:
@@ -183,7 +186,7 @@ else:
 
 
 #X_train, y_train  = train_data.get_all_train_data(side_steer=0.1)
-X_train, y_train  = train_data.get_train_data_straight_augmented(correction=0.0675, correction_range=0.005, c2=1.1)
+X_train, y_train  = train_data.get_train_data_straight_augmented(correction=0.065, correction_range=0.005)
 
 
 print('X_train shape:',X_train.shape)
@@ -193,14 +196,21 @@ print('X_train image shape:',X_train[0].shape)
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda, Cropping2D, Convolution2D, Dropout, MaxPooling2D
 
+_dropout=0.1
+
 model = Sequential()
-model.add(Convolution2D(16, (3, 3), activation='relu', padding='same', input_shape=X_train.shape[1:]))
+model.add(Convolution2D(8, (3, 3), activation='relu', padding='same', input_shape=X_train.shape[1:]))
 model.add(MaxPooling2D())
+model.add(Dropout(_dropout))
+model.add(Convolution2D(16, (3, 3), activation='relu', padding='same'))
+model.add(MaxPooling2D())
+model.add(Dropout(_dropout))
 model.add(Convolution2D(32, (3, 3), activation='relu', padding='same'))
 model.add(MaxPooling2D())
+model.add(Dropout(_dropout))
 model.add(Convolution2D(64, (3, 3), activation='relu', padding='same'))
 model.add(MaxPooling2D())
-model.add(Dropout(0.2))
+model.add(Dropout(_dropout))
 model.add(Flatten())
 model.add(Dense(1000))
 model.add(Dense(100))
@@ -212,7 +222,7 @@ model.compile(loss='mse', optimizer='adam')
 
 print(model.summary())
 
-model.fit(X_train, y_train, validation_split=0.2, shuffle=True, epochs=10)
+model.fit(X_train, y_train, validation_split=0.2, shuffle=True, epochs=16)
 
 model.save('model.h5')
 
