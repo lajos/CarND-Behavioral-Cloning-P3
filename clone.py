@@ -155,7 +155,7 @@ def read_train_data(train_data, folders):
 
 train_data = TrainData()
 
-_reload_data = True
+_reload_data = False
 
 if _reload_data:
     #read_train_data(train_data,['1'])
@@ -169,14 +169,11 @@ if _reload_data:
     read_train_data(train_data,['11'])
     read_train_data(train_data,['11_rev'])
     read_train_data(train_data,['11_bridge'])
-    read_train_data(train_data,['11_bridge_adjust'])
-    read_train_data(train_data,['11_bridge_adjust'])
-    read_train_data(train_data,['11_bridge_adjust'])
     read_train_data(train_data,['11_right'])
     read_train_data(train_data,['11_right'])
     read_train_data(train_data,['11_left'])
 
-    # read_train_data(train_data,['21'])
+    read_train_data(train_data,['21'])
     # read_train_data(train_data,['21_rev'])
 
     train_data.preprocess()
@@ -222,7 +219,7 @@ model.compile(loss='mse', optimizer='adam')
 
 print(model.summary())
 
-model.fit(X_train, y_train, validation_split=0.2, shuffle=True, epochs=16)
+model.fit(X_train, y_train, validation_split=0.2, shuffle=True, epochs=17)
 
 model.save('model.h5')
 

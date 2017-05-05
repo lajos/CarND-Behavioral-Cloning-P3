@@ -32,6 +32,18 @@ def img_crop(img):
     origin_y = int(_top_crop*img.shape[0])
     return(img[origin_y:origin_y+height,:])
 
+def img_sharpen(img):
+    kernel = np.array([[0,-1,0], [-1,5,-1], [0,-1,0]])
+    return cv2.filter2D(img, -1, kernel)
+
+def img_unsharp_mask(img):
+    kernel = np.array([[1,4,6,4,1],
+        [4,16,24,16,4],
+        [6,24,-476,24,6],
+        [4,16,24,16,4],
+        [1,4,6,4,1]])/-256.0
+    return cv2.filter2D(img, -1, kernel)
+
 def preprocess(img):
     img = img_resize(img)
     img = img_crop(img)
@@ -47,8 +59,12 @@ if __name__=='__main__':
     print('input image shape: ',img.shape)
 
     img = img_resize(img)
-    img = img_crop(img)
-    img = img_rgb2HLS(img)
+    # img = img_crop(img)
+    # img = img_rgb2HLS(img)
+    #img = img_sharpen(img)
+    #img = img_unsharp_mask(img)
+    #img = img_unsharp_mask(img)
+    #img = img_unsharp_mask(img)
 
     print('output image shape: ',img.shape)
     cv2.imshow('test image', img)
