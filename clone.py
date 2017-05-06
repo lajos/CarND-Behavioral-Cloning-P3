@@ -74,6 +74,8 @@ class TrainData:
         steer = np.append(np.append(np.array(self.steer),
             np.zeros(len(self.steer))+side_steer),
             np.zeros(len(self.steer))-side_steer)
+        print(images.shape)
+        print(steer.shape)
         return (images, steer)
 
     def get_train_data_straight_augmented(self, correction=0.6, correction_range=0.01):
@@ -182,8 +184,8 @@ else:
     train_data.unpickle()
 
 
-#X_train, y_train  = train_data.get_all_train_data(side_steer=0.1)
-X_train, y_train  = train_data.get_train_data_straight_augmented(correction=0.065, correction_range=0.005)
+X_train, y_train  = train_data.get_all_train_data(side_steer=0.2)
+#X_train, y_train  = train_data.get_train_data_straight_augmented(correction=0.065, correction_range=0.005)
 
 
 print('X_train shape:',X_train.shape)
