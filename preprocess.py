@@ -45,11 +45,35 @@ def img_unsharp_mask(img):
     return cv2.filter2D(img, -1, kernel)
 
 def preprocess(img):
+    # img = img_resize(img)
+    # img = img_crop(img)
+    # img = img_rgb2HLS(img)
+    # img = img_normalize(img)
+    # img_unsharp_mask(img)
+
+    # img = img_resize(img)
+    # img = img_crop(img)
+    # b,g,r = cv2.split(img)
+    # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4,4))
+    # #clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8,8))
+    # b = clahe.apply(b)
+    # g = clahe.apply(g)
+    # r = clahe.apply(r)
+    # img=cv2.merge((b,g,r))
+    # img = img_rgb2HLS(img)
+    # img = img_normalize(img)
+    # img_unsharp_mask(img)
+
     img = img_resize(img)
     img = img_crop(img)
     img = img_rgb2HLS(img)
+    b,g,r = cv2.split(img)
+    clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8,8))
+    g = clahe.apply(g)
+    img=cv2.merge((b,g,r))
     img = img_normalize(img)
     img_unsharp_mask(img)
+
     img=img-0.5
     if len(img.shape)==2:
         img = img[:,:,None]
@@ -59,13 +83,17 @@ if __name__=='__main__':
     img = cv2.imread('test.jpg')
     print('input image shape: ',img.shape)
 
+
     img = img_resize(img)
-    # img = img_crop(img)
-    # img = img_rgb2HLS(img)
-    #img = img_sharpen(img)
-    #img = img_unsharp_mask(img)
-    #img = img_unsharp_mask(img)
-    #img = img_unsharp_mask(img)
+    img = img_crop(img)
+    img = img_rgb2HLS(img)
+    b,g,r = cv2.split(img)
+    clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8,8))
+#    b = clahe.apply(b)
+    g = clahe.apply(g)
+#    r = clahe.apply(r)
+    img=cv2.merge((b,g,r))
+    img_unsharp_mask(img)
 
     print('output image shape: ',img.shape)
     cv2.imshow('test image', img)

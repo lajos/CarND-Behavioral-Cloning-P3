@@ -3,6 +3,8 @@ import cv2
 import numpy as np
 import random
 from preprocess import preprocess
+from pathlib import Path
+from sklearn.utils import shuffle
 
 _training_data_root = 'training_data'
 
@@ -10,17 +12,6 @@ _cameras = { 0: 'center', 1: 'left', 2: 'right'}
 
 
 def print_progress_bar (iteration, total, prefix = 'progress:', suffix = ' ', decimals = 1, length = 30, fill = '='):
-    """
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-    """
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
     filledLength = int(length * iteration // total)
     bar = fill * filledLength + '.' * (length - filledLength)
@@ -125,25 +116,41 @@ def get_csv_len(csv_filename):
         row_count = len(data)
     return(row_count)
 
+def get_csv_filename(folder, force_marked=False):
+    marked_file = Path('{}/{}/driving_log_marked.csv'.format(_training_data_root, folder))
+    if force_marked or marked_file.is_file():
+        return(str(marked_file))
+    return '{}/{}/driving_log.csv'.format(_training_data_root, folder)
+
 def read_train_data_folder(train_data, folder, min_speed=15):
     print('.read train data folder:',folder)
-    csv_filename = '{}/{}/driving_log.csv'.format(_training_data_root, folder)
+    csv_filename = get_csv_filename(folder)
+    print('.drive log:',csv_filename)
     csv_len = get_csv_len(csv_filename)
+    print('.csv length:', csv_len)
     i=0
     print_progress_bar(i, csv_len, prefix = 'read {}:'.format(folder))
     with open(csv_filename, 'r') as csvfile:
         reader = csv.reader(csvfile)
-        header = next(reader)
         for line in reader:
+            try:
+                speed = float(line[3])
+            except:
+                continue
             if float(line[6])<min_speed:
                 continue
+            marked = True
+            if (len(line)>7):
+                marked = not line[7]=='False'
+                if not marked:
+                    continue
             images = []
             for image_name in line[:3]:
                 image_name = image_name.split('\\')[-1]
                 image_file = '{}/{}/IMG/{}'.format(_training_data_root, folder, image_name)
                 image = cv2.imread(image_file)
                 images.append(image)
-            train_data.append(images, float(line[3]), float(line[4]), float(line[5]), (line[6]))
+            train_data.append(images, float(line[3]), float(line[4]), float(line[5]), float(line[6]))
             i += 1
             if i%100==0:
                 print_progress_bar(i, csv_len, prefix = 'read {}:'.format(folder))
@@ -176,7 +183,7 @@ if _reload_data:
     # read_train_data(train_data,['21'])
     # read_train_data(train_data,['21_rev'])
 
-    read_train_data(train_data,['j1'])
+    read_train_data(train_data,['j1','j2'])
 
     train_data.preprocess()
     train_data.pickle()
@@ -184,8 +191,8 @@ else:
     train_data.unpickle()
 
 
-X_train, y_train  = train_data.get_all_train_data(side_steer=0.2)
-#X_train, y_train  = train_data.get_train_data_straight_augmented(correction=0.065, correction_range=0.005)
+#X_train, y_train  = train_data.get_all_train_data(side_steer=0.2)
+X_train, y_train  = train_data.get_train_data_straight_augmented(correction=0.065, correction_range=0.005)
 
 
 print('X_train shape:',X_train.shape)
@@ -195,19 +202,19 @@ print('X_train image shape:',X_train[0].shape)
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda, Cropping2D, Convolution2D, Dropout, MaxPooling2D
 
-_dropout=0.1
+_dropout=0.2
 
 model = Sequential()
-model.add(Convolution2D(8, (3, 3), activation='relu', padding='same', input_shape=X_train.shape[1:]))
+model.add(Convolution2D(8, (3, 3), activation='elu', padding='same', input_shape=X_train.shape[1:]))
 model.add(MaxPooling2D())
 model.add(Dropout(_dropout))
-model.add(Convolution2D(16, (3, 3), activation='relu', padding='same'))
+model.add(Convolution2D(16, (3, 3), activation='elu', padding='same'))
 model.add(MaxPooling2D())
 model.add(Dropout(_dropout))
-model.add(Convolution2D(32, (3, 3), activation='relu', padding='same'))
+model.add(Convolution2D(32, (3, 3), activation='elu', padding='same'))
 model.add(MaxPooling2D())
 model.add(Dropout(_dropout))
-model.add(Convolution2D(64, (3, 3), activation='relu', padding='same'))
+model.add(Convolution2D(64, (3, 3), activation='elu', padding='same'))
 model.add(MaxPooling2D())
 model.add(Dropout(_dropout))
 model.add(Flatten())
@@ -221,7 +228,10 @@ model.compile(loss='mse', optimizer='adam')
 
 print(model.summary())
 
-model.fit(X_train, y_train, validation_split=0.2, shuffle=True, epochs=8)
+for i in range(20):
+    print('.epoch:',i+1)
+    X_train, y_train = shuffle(X_train, y_train)
+    model.fit(X_train, y_train, validation_split=0.2, shuffle=False, epochs=1)
 
 model.save('model.h5')
 
