@@ -5,6 +5,7 @@ import random
 from preprocess import preprocess
 from pathlib import Path
 from sklearn.utils import shuffle
+import sys
 
 _training_data_root = 'training_data'
 
@@ -122,7 +123,7 @@ def get_csv_filename(folder, force_marked=False):
         return(str(marked_file))
     return '{}/{}/driving_log.csv'.format(_training_data_root, folder)
 
-def read_train_data_folder(train_data, folder, min_speed=15):
+def read_train_data_folder(train_data, folder, min_speed=1):
     print('.read train data folder:',folder)
     csv_filename = get_csv_filename(folder)
     print('.drive log:',csv_filename)
@@ -165,25 +166,8 @@ train_data = TrainData()
 _reload_data = True
 
 if _reload_data:
-    #read_train_data(train_data,['1'])
-    #read_train_data(train_data,['2'])
-    # read_train_data(train_data,['1_rev'])
-    # read_train_data(train_data,['2_rev'])
-    # read_train_data(train_data,['3'])
-    # read_train_data(train_data,['4'])
-    # read_train_data(train_data,['5'])
-
-    # read_train_data(train_data,['11'])
-    # read_train_data(train_data,['11_rev'])
-    # read_train_data(train_data,['11_bridge'])
-    # read_train_data(train_data,['11_right'])
-    # read_train_data(train_data,['11_right'])
-    # read_train_data(train_data,['11_left'])
-
-    # read_train_data(train_data,['21'])
-    # read_train_data(train_data,['21_rev'])
-
-    read_train_data(train_data,['j1','j2'])
+    read_train_data(train_data,['j1','j2','j3','j4','j5','j7'])
+#    read_train_data(train_data,['j3'])
 
     train_data.preprocess()
     train_data.pickle()
@@ -205,7 +189,7 @@ from keras.layers import Flatten, Dense, Lambda, Cropping2D, Convolution2D, Drop
 _dropout=0.2
 
 model = Sequential()
-model.add(Convolution2D(8, (3, 3), activation='elu', padding='same', input_shape=X_train.shape[1:]))
+model.add(Convolution2D(8, (5, 5), activation='elu', padding='same', input_shape=X_train.shape[1:]))
 model.add(MaxPooling2D())
 model.add(Dropout(_dropout))
 model.add(Convolution2D(16, (3, 3), activation='elu', padding='same'))
@@ -217,6 +201,14 @@ model.add(Dropout(_dropout))
 model.add(Convolution2D(64, (3, 3), activation='elu', padding='same'))
 model.add(MaxPooling2D())
 model.add(Dropout(_dropout))
+
+# nvidia
+# model.add(Convolution2D(3, (5, 5), strides=(2,2), activation='elu',input_shape=X_train.shape[1:]))
+# model.add(Convolution2D(24, (5, 5), strides=(2,2), activation='elu'))
+# model.add(Convolution2D(36, (5, 5), strides=(2,2), activation='elu'))
+# model.add(Convolution2D(48, (3, 3), activation='elu'))
+# model.add(Convolution2D(64, (3, 3), activation='elu'))
+
 model.add(Flatten())
 model.add(Dense(1000))
 model.add(Dense(100))
@@ -228,10 +220,14 @@ model.compile(loss='mse', optimizer='adam')
 
 print(model.summary())
 
-for i in range(20):
+#sys.exit(0)
+
+for i in range(64):
     print('.epoch:',i+1)
     X_train, y_train = shuffle(X_train, y_train)
     model.fit(X_train, y_train, validation_split=0.2, shuffle=False, epochs=1)
+    if i%2==1:
+       model.save('model.{:02d}.h5'.format(i))
 
 model.save('model.h5')
 

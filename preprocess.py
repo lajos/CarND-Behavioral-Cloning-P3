@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import skimage
+import skimage.transform
 
 def img_rgb2Lab(img):
     labImg = cv2.cvtColor(img, cv2.COLOR_RGB2Lab)
@@ -23,7 +25,8 @@ def img_normalize(img):
     return(img/255.0)
 
 #percent of image
-_top_crop = 0.35
+#_top_crop = 0.35
+_top_crop = 0.40
 _bottom_crop = 0.15
 #_bottom_crop = 0.0
 
@@ -43,6 +46,35 @@ def img_unsharp_mask(img):
         [4,16,24,16,4],
         [1,4,6,4,1]])/-256.0
     return cv2.filter2D(img, -1, kernel)
+
+def img_pad(img, wt=200, ht=66):
+    w=img.shape[1]
+    h=img.shape[0]
+    wp = int((wt-w)/2)
+    hp = int((ht-h)/2)
+    padded = np.zeros((ht,wt,3),dtype=np.uint8)
+    padded[hp:h+hp, wp:w+wp,:]=img
+    return(padded)
+
+def img_untilt(img, distance=5):
+    w=img.shape[1]
+    h=img.shape[0]
+    m1 = np.array(((0,0),(0,h),(w,h),(w,0)))
+    m2 = np.array(((-distance,0),(0,h),(w,h),(w+distance,0)))
+    projection = skimage.transform.ProjectiveTransform()
+    projection.estimate(m2,m1)
+    img = skimage.transform.warp(img, projection)
+    return(img)
+
+def img_untilt2(img, distance=5):
+    w=img.shape[1]
+    h=img.shape[0]
+    pts1 = np.float32([[0,0],[w,0],[0,h],[w,h]])
+    pts2 = np.float32([[-distance,0],[w+distance,0],[0,h],[w,h]])
+
+    M = cv2.getPerspectiveTransform(pts1,pts2)
+
+    return cv2.warpPerspective(img,M,(w,h))
 
 def preprocess(img):
     # img = img_resize(img)
@@ -66,15 +98,17 @@ def preprocess(img):
 
     img = img_resize(img)
     img = img_crop(img)
+    img = img_untilt2(img,distance=50)
     img = img_rgb2HLS(img)
     b,g,r = cv2.split(img)
-    clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8,8))
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12,12))
     g = clahe.apply(g)
     img=cv2.merge((b,g,r))
     img = img_normalize(img)
     img_unsharp_mask(img)
 
     img=img-0.5
+
     if len(img.shape)==2:
         img = img[:,:,None]
     return(img)
@@ -86,14 +120,21 @@ if __name__=='__main__':
 
     img = img_resize(img)
     img = img_crop(img)
+
+    img = img_untilt2(img,distance=50)
+
     img = img_rgb2HLS(img)
     b,g,r = cv2.split(img)
-    clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8,8))
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12,12))
 #    b = clahe.apply(b)
     g = clahe.apply(g)
 #    r = clahe.apply(r)
-    img=cv2.merge((b,g,r))
-    img_unsharp_mask(img)
+    img=cv2.merge((g,g,g))
+#    img =img_pad(img)
+
+
+
+ #   img_unsharp_mask(img)
 
     print('output image shape: ',img.shape)
     cv2.imshow('test image', img)

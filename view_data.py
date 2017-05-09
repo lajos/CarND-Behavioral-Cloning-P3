@@ -203,5 +203,5 @@ def read_train_data(train_data, folder, min_speed=15):
 
 if __name__ == '__main__':
     train_data = TrainData()
-    read_train_data(train_data,'j2')
+    read_train_data(train_data,'j7')
     app = Display(train_data)
