@@ -26,7 +26,7 @@ def img_normalize(img):
 
 #percent of image
 #_top_crop = 0.35
-_top_crop = 0.40
+_top_crop = 0.45
 _bottom_crop = 0.15
 #_bottom_crop = 0.0
 

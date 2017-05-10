@@ -7,6 +7,7 @@ import time
 import csv
 from pathlib import Path
 import cv2
+import sys
 
 _training_data_root = 'training_data'
 
@@ -203,5 +204,8 @@ def read_train_data(train_data, folder, min_speed=15):
 
 if __name__ == '__main__':
     train_data = TrainData()
-    read_train_data(train_data,'j7')
+    folder='j2'
+    if len(sys.argv)>1:
+        folder=sys.argv[1]
+    read_train_data(train_data,folder)
     app = Display(train_data)

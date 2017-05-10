@@ -166,8 +166,8 @@ train_data = TrainData()
 _reload_data = True
 
 if _reload_data:
-    read_train_data(train_data,['j1','j2','j3','j4','j5','j7'])
-#    read_train_data(train_data,['j3'])
+    read_train_data(train_data,['j1','j2','j3','j4','j5','j7','j8'])
+    # read_train_data(train_data,['j3'])
 
     train_data.preprocess()
     train_data.pickle()
@@ -220,14 +220,13 @@ model.compile(loss='mse', optimizer='adam')
 
 print(model.summary())
 
-#sys.exit(0)
-
 for i in range(64):
     print('.epoch:',i+1)
     X_train, y_train = shuffle(X_train, y_train)
     model.fit(X_train, y_train, validation_split=0.2, shuffle=False, epochs=1)
     if i%2==1:
        model.save('model.{:02d}.h5'.format(i))
+    # sys.exit(0)
 
 model.save('model.h5')
 
