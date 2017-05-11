@@ -118,21 +118,19 @@ if __name__=='__main__':
     print('input image shape: ',img.shape)
 
 
-    img = img_resize(img)
-    img = img_crop(img)
+#     img = img_resize(img)
+#     img = img_crop(img)
+#     img = img_untilt2(img,distance=50)
+#     img = img_rgb2HLS(img)
+#     b,g,r = cv2.split(img)
+#     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12,12))
+# #    b = clahe.apply(b)
+#     g = clahe.apply(g)
+# #    r = clahe.apply(r)
+#     img=cv2.merge((g,g,g))
+# #    img =img_pad(img)
 
-    img = img_untilt2(img,distance=50)
-
-    img = img_rgb2HLS(img)
-    b,g,r = cv2.split(img)
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12,12))
-#    b = clahe.apply(b)
-    g = clahe.apply(g)
-#    r = clahe.apply(r)
-    img=cv2.merge((g,g,g))
-#    img =img_pad(img)
-
-
+    img = np.fliplr(img)
 
  #   img_unsharp_mask(img)
 

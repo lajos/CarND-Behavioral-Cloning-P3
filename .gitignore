@@ -6,3 +6,4 @@ data/
 windows_sim/
 training_data/
 __pycache__/
+session*/

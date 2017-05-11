@@ -70,7 +70,7 @@ class TrainData:
         print(steer.shape)
         return (images, steer)
 
-    def get_train_data_straight_augmented(self, correction=0.6, correction_range=0.01):
+    def get_train_data_straight_augmented(self, correction=0.6, correction_range=0.01, side_correction=0.2):
         images = []
         steer = []
         center_steer_correction = correction
@@ -94,6 +94,14 @@ class TrainData:
                 steer.append(self.steer[i])
                 images.append(np.fliplr(self.images[0][i]))
                 steer.append(-self.steer[i])
+                images.append(self.images[1][i])
+                steer.append(self.steer[i]+side_correction)
+                images.append(self.images[2][i])
+                steer.append(self.steer[i]-side_correction)
+                images.append(np.fliplr(self.images[1][i]))
+                steer.append(-(self.steer[i]+side_correction))
+                images.append(np.fliplr(self.images[2][i]))
+                steer.append(-(self.steer[i]-side_correction))
 
         print('    no steer samples    :',n_zero_steer)
         print('    with steer samples  :',n_with_steer)
@@ -166,13 +174,20 @@ train_data = TrainData()
 _reload_data = True
 
 if _reload_data:
+
+    # read_train_data(train_data,['j1','j2','j3','j5','j6','j8','j9'])
+    # read_train_data(train_data,['k1','k2','k3'])
+    # read_train_data(train_data,['k4','k4','k5','k5','j4','j4', 'j7','j7'])  # shade turn
+    # read_train_data(train_data,['k6','k6','k7','k7','k8','k8','k9','k9'])  # downhill right
+    # read_train_data(train_data,['l1','l1','l1','l1','l1','l1','l1','l1','l1']) # downhill right
+    # read_train_data(train_data,['k6','k6','k7','k7','k8','k8','k9','k9'])  # downhill right
+    # read_train_data(train_data,['l1','l1','l1','l1','l1','l1','l1','l1','l1']) # downhill right
+
     read_train_data(train_data,['j1','j2','j3','j5','j6','j8','j9'])
     read_train_data(train_data,['k1','k2','k3'])
-    read_train_data(train_data,['k4','k4','k5','k5','j4','j4', 'j7','j7'])  # shade turn
-    read_train_data(train_data,['k6','k6','k7','k7','k8','k8','k9','k9'])  # downhill right
-    read_train_data(train_data,['l1','l1','l1','l1','l1','l1','l1','l1','l1']) # downhill right
-    read_train_data(train_data,['k6','k6','k7','k7','k8','k8','k9','k9'])  # downhill right
-    read_train_data(train_data,['l1','l1','l1','l1','l1','l1','l1','l1','l1']) # downhill right
+    read_train_data(train_data,['k4','k5','j4','j7'])  # shade turn
+    read_train_data(train_data,['k6','k7','k8','k9'])  # downhill right
+    read_train_data(train_data,['l1']) # downhill right
 
     # read_train_data(train_data,['j3'])
 
