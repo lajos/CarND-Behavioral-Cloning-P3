@@ -166,7 +166,14 @@ train_data = TrainData()
 _reload_data = True
 
 if _reload_data:
-    read_train_data(train_data,['j1','j2','j3','j4','j5','j7','j8'])
+    read_train_data(train_data,['j1','j2','j3','j5','j6','j8','j9'])
+    read_train_data(train_data,['k1','k2','k3'])
+    read_train_data(train_data,['k4','k4','k5','k5','j4','j4', 'j7','j7'])  # shade turn
+    read_train_data(train_data,['k6','k6','k7','k7','k8','k8','k9','k9'])  # downhill right
+    read_train_data(train_data,['l1','l1','l1','l1','l1','l1','l1','l1','l1']) # downhill right
+    read_train_data(train_data,['k6','k6','k7','k7','k8','k8','k9','k9'])  # downhill right
+    read_train_data(train_data,['l1','l1','l1','l1','l1','l1','l1','l1','l1']) # downhill right
+
     # read_train_data(train_data,['j3'])
 
     train_data.preprocess()
@@ -220,11 +227,11 @@ model.compile(loss='mse', optimizer='adam')
 
 print(model.summary())
 
-for i in range(64):
+for i in range(48):
     print('.epoch:',i+1)
     X_train, y_train = shuffle(X_train, y_train)
     model.fit(X_train, y_train, validation_split=0.2, shuffle=False, epochs=1)
-    if i%2==1:
+    if i>25:
        model.save('model.{:02d}.h5'.format(i))
     # sys.exit(0)
 

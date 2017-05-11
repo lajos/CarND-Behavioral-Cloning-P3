@@ -74,7 +74,7 @@ def img_untilt2(img, distance=5):
 
     M = cv2.getPerspectiveTransform(pts1,pts2)
 
-    return cv2.warpPerspective(img,M,(w,h))
+    return cv2.warpPerspective(img,M,(w,h), flags=cv2.INTER_NEAREST)
 
 def preprocess(img):
     # img = img_resize(img)
@@ -98,7 +98,7 @@ def preprocess(img):
 
     img = img_resize(img)
     img = img_crop(img)
-    img = img_untilt2(img,distance=50)
+    img = img_untilt2(img,distance=80)
     img = img_rgb2HLS(img)
     b,g,r = cv2.split(img)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12,12))
@@ -114,7 +114,7 @@ def preprocess(img):
     return(img)
 
 if __name__=='__main__':
-    img = cv2.imread('test.jpg')
+    img = cv2.imread('test2.jpg')
     print('input image shape: ',img.shape)
 
 
