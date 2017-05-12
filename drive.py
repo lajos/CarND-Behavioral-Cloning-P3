@@ -48,7 +48,7 @@ class SimplePIController:
 
 
 controller = SimplePIController(0.1, 0.002)
-set_speed = 17
+set_speed = 24
 controller.set_desired(set_speed)
 
 @sio.on('telemetry')
