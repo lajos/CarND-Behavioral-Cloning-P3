@@ -94,14 +94,15 @@ class TrainData:
                 steer.append(self.steer[i])
                 images.append(np.fliplr(self.images[0][i]))
                 steer.append(-self.steer[i])
-                images.append(self.images[1][i])
-                steer.append(self.steer[i]+side_correction)
-                images.append(self.images[2][i])
-                steer.append(self.steer[i]-side_correction)
-                images.append(np.fliplr(self.images[1][i]))
-                steer.append(-(self.steer[i]+side_correction))
-                images.append(np.fliplr(self.images[2][i]))
-                steer.append(-(self.steer[i]-side_correction))
+
+                # images.append(self.images[1][i])
+                # steer.append(min(1,self.steer[i]+side_correction))
+                # images.append(self.images[2][i])
+                # steer.append(max(-1,self.steer[i]-side_correction))
+                # images.append(np.fliplr(self.images[1][i]))
+                # steer.append(-(min(1,self.steer[i]+side_correction)))
+                # images.append(np.fliplr(self.images[2][i]))
+                # steer.append(-(max(-1,self.steer[i]-side_correction)))
 
         print('    no steer samples    :',n_zero_steer)
         print('    with steer samples  :',n_with_steer)
@@ -187,7 +188,7 @@ if _reload_data:
     read_train_data(train_data,['k1','k2','k3'])
     read_train_data(train_data,['k4','k5','j4','j7'])  # shade turn
     read_train_data(train_data,['k6','k7','k8','k9'])  # downhill right
-    read_train_data(train_data,['l1']) # downhill right
+    read_train_data(train_data,['l1','l2', 'l3']) # downhill right
 
     # read_train_data(train_data,['j3'])
 
@@ -207,6 +208,7 @@ print('X_train image shape:',X_train[0].shape)
 
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda, Cropping2D, Convolution2D, Dropout, MaxPooling2D
+from keras import regularizers
 
 _dropout=0.2
 
@@ -230,6 +232,15 @@ model.add(Dropout(_dropout))
 # model.add(Convolution2D(36, (5, 5), strides=(2,2), activation='elu'))
 # model.add(Convolution2D(48, (3, 3), activation='elu'))
 # model.add(Convolution2D(64, (3, 3), activation='elu'))
+
+# _l2_reg = 0.001
+
+# model.add(Flatten())
+# model.add(Dense(1000, kernel_regularizer=regularizers.l2(_l2_reg)))
+# model.add(Dense(100, kernel_regularizer=regularizers.l2(_l2_reg)))
+# model.add(Dense(50, kernel_regularizer=regularizers.l2(_l2_reg)))
+# model.add(Dense(10, kernel_regularizer=regularizers.l2(_l2_reg)))
+# model.add(Dense(1))
 
 model.add(Flatten())
 model.add(Dense(1000))
