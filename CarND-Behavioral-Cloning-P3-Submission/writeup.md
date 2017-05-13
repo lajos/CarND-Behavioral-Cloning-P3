@@ -1,8 +1,6 @@
 # **Behavioral Cloning**
-
 ---
-
-**Behavioral Cloning Project**
+## Project
 
 The goals / steps of this project are the following:
 * Use the simulator to collect data of good driving behavior
@@ -10,49 +8,80 @@ The goals / steps of this project are the following:
 * Train and validate the model with a training and validation set
 * Test that the model successfully drives around track one without leaving the road
 * Summarize the results with a written report
-
 ---
+## Simulator
 
-## Model Architecture
+Udacity provided a simulator with 2 tracks.
+
+![simulator](writeup-assets/simulator.jpg)
+
+The simulator has two modes:
+* **Training:** In training mode the car can be driven around the tracks by the user and the simulator records three images mounted in the center, left and right of the car and steering angle, throttle, brake and speed values for each frame.
+* **Autonomous:** In autonomous mode the simulator connects to an external program (drive.py), sends the image from the center mounted camera, the current speed and throttle position. The drive.py program uses the image to predict the steering angle based on a trained [Keras](https://github.com/fchollet/keras) model and calculates the updated throttle position to maintain a predefined speed. The steering angle and throttle position are then sent back to the simulator.
+---
+## Track 1
+---
+### Model Architecture
 
 My model was inspired by NVIDIA's model from their [End-to-End Deep Learning for Self-Driving Cars](https://devblogs.nvidia.com/parallelforall/deep-learning-self-driving-cars/) article.
 
 My graphics card does not have enough memory to run NVIDA's model and their model required a specific input image size so I have reduced the number of [convolutional layers](https://keras.io/layers/convolutional/#conv2d) and changed the padding to 'same' to allow more flexible experimentation with input image sizes.
 
-I have added [max pooling](https://keras.io/layers/pooling/#maxpooling2d) and [dropout](https://keras.io/layers/core/#dropout) layers to prevent overfitting.
+I have added [max pooling](https://keras.io/layers/pooling/#maxpooling2d) and [dropout](https://keras.io/layers/core/#dropout) layers to prevent overfitting. Convolutional layers use [ELU](http://image-net.org/challenges/posters/JKU_EN_RGB_Schwarz_poster.pdf) activation to allow non-linear training.
 
 My final model architecture:
 
-| layer                 |  parameters        | output     |
-|:---------------------:|:------------------:|:----------:|
-| Input                 | image              | 160x32x3   |
-| Convolution 1         | K=3, S=1, D=64     | 32x32x64   |
-| RELU                  |                    |            |
-| MaxPool 1             | K=2, S=2           | 16x16x64   |
-| Dropout               | 0.6                |            |
-| Convolution 2         | K=3, S=1, D=128    | 16x16x128  |
-| RELU                  |                    |            |
-| MaxPool 2             | K=2, S=2           | 8x8x128    |
-| Dropout               | 0.5                |            |
-| Convolution 3         | K=3, S=1, D=256    | 8x8x256    |
-| RELU                  |                    |            |
-| MaxPool 3             | K=2, S=2           | 4x4x256    |
-| Dropout               | 0.6                |            |
-| Convolution 4         | K=3, S=1, D=512    | 4x4x512    |
-| RELU                  |                    |            |
-| MaxPool 4             | K=2, S=2           | 2x2x512    |
-| Dropout               | 0.6                |            |
-| Flatten               | concat MaxPool 1-4 | 30720      |
-| Fully Connected 1     | L2 regularization  | 4096       |
-| RELU                  |                    |            |
-| Dropout               | 0.6                |            |
-| Fully Connected 2     | L2 regularization  | 1024       |
-| RELU                  |                    |            |
-| Dropout               | 0.7                |            |
-| Fully Connected 3     | L2 regularization  | 43         |
-| Sigmoid               |                    |            |
+| layer                 |  parameters        | output       |
+|:---------------------:|:------------------:|:------------:|
+| Input                 | image              | 32, 160, 3   |
+| Convolution ELU 1     | K=3, S=1, D=8      | 32, 160, 8   |
+| MaxPooling            | K=2, S=2           | 16, 80, 8    |
+| Dropout               | 0.2                |              |
+| Convolution ELU 2     | K=3, S=1, D=16     | 16, 80, 16   |
+| MaxPooling            | K=2, S=2           | 8, 40, 16    |
+| Dropout               | 0.2                |              |
+| Convolution ELU 3     | K=3, S=1, D=32     | 8, 40, 32    |
+| MaxPooling            | K=2, S=2           | 4, 20, 32    |
+| Dropout               | 0.2                |              |
+| Convolution ELU 4     | K=3, S=1, D=64     | 4, 20, 64    |
+| MaxPooling            | K=2, S=2           | 2, 10, 64    |
+| Dropout               | 0.2                |              |
+| Flatten               |                    | 1280         |
+| Dense                 |                    | 1000         |
+| Dense                 |                    | 100          |
+| Dense                 |                    | 50           |
+| Dense                 |                    | 10           |
+| Dense                 |                    | 1            |
 
-All convolution and max pooling layers use 'SAME' padding and K and S values are same on x and y axis.
+**Total parameters:** 1,411,583
+---
+### Training Data Collection
+
+After some failures and experimentation it became apparent that the quality of the training data is important to successfuly train the model.
+
+I have found the XBOX controller to work best as an input method, but I don't play video games so it's been a challenge to drive the car around the track in the middle of the lane. I decided to "improve" the analog stick by attaching a 3d printed extension.
+
+![xbox controller extension](writeup-assets/controller.jpg)
+---
+### Preprocessing
+
+I created a separate preprocessing module (preprocess.py) to make sure that images are preprocessed the same way during training and prediction.
+
+I tested several image spaces and found that converting the images to HLS provided the greatest improvement. This is one of the recorded images in RGB and HLS (displayed hue displayed as red, lightness as green, saturation as blue):
+
+![rgb and hls](writeup-assets/rgb_hls.jpg)
+
+I also cropped the bottom and top of the images to get rig of the front of the car and sky (lightness channel only):
+
+![cropping](writeup-assets/crop.png)
+
+
+
+Additionally images are normalized to zero mean and unit variance (values -0.5...0.5).
+
+---
+## Track 2
+---
 
 ---
 
@@ -82,7 +111,7 @@ The model was trained and validated on different data sets to ensure that the mo
 
 ####3. Model parameter tuning
 
-The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 25).
+The model used an optimizer, so the learning rate was not tuned manually (model.py line 25).
 
 ####4. Appropriate training data
 

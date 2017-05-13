@@ -114,9 +114,8 @@ def preprocess(img):
     return(img)
 
 if __name__=='__main__':
-    img = cv2.imread('test2.jpg')
+    img = cv2.imread('test3.jpg')
     print('input image shape: ',img.shape)
-
 
 #     img = img_resize(img)
 #     img = img_crop(img)
@@ -130,9 +129,25 @@ if __name__=='__main__':
 #     img=cv2.merge((g,g,g))
 # #    img =img_pad(img)
 
-    img = np.fliplr(img)
+#    img = np.fliplr(img)
 
  #   img_unsharp_mask(img)
+
+    # b,g,r = cv2.split(img)
+    # cv2.imwrite('stuff/r.png', r)
+    # cv2.imwrite('stuff/b.png', b)
+    # cv2.imwrite('stuff/g.png', g)
+
+    img = img_rgb2HLS(img)
+    img = img_crop(img)
+    s,l,h = cv2.split(img)
+    cv2.imwrite('stuff/temp.png', l)
+
+    # s,l,h = cv2.split(img)
+    # cv2.imwrite('stuff/h.png', h)
+    # cv2.imwrite('stuff/s.png', s)
+    # cv2.imwrite('stuff/l.png', l)
+
 
     print('output image shape: ',img.shape)
     cv2.imshow('test image', img)
