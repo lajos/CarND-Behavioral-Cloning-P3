@@ -176,20 +176,27 @@ _reload_data = True
 
 if _reload_data:
 
+    # track1
+    #
+    read_train_data(train_data,['2','2_rev','3','4','5'])
+    read_train_data(train_data,['11'])
+    read_train_data(train_data,['11_rev'])
+    read_train_data(train_data,['11_bridge'])
+    read_train_data(train_data,['11_right'])
+    read_train_data(train_data,['11_left'])
+    read_train_data(train_data,['21'])
+    read_train_data(train_data,['21_rev'])
+
+    # track2
+    # read_train_data(train_data,['21'])
     # read_train_data(train_data,['j1','j2','j3','j5','j6','j8','j9'])
     # read_train_data(train_data,['k1','k2','k3'])
-    # read_train_data(train_data,['k4','k4','k5','k5','j4','j4', 'j7','j7'])  # shade turn
-    # read_train_data(train_data,['k6','k6','k7','k7','k8','k8','k9','k9'])  # downhill right
-    # read_train_data(train_data,['l1','l1','l1','l1','l1','l1','l1','l1','l1']) # downhill right
-    # read_train_data(train_data,['k6','k6','k7','k7','k8','k8','k9','k9'])  # downhill right
-    # read_train_data(train_data,['l1','l1','l1','l1','l1','l1','l1','l1','l1']) # downhill right
+    # read_train_data(train_data,['k4','k5','j4','j7'])  # shade turn
+    # read_train_data(train_data,['k6','k7','k8','k9'])  # downhill right
+    # read_train_data(train_data,['l1','l2', 'l3']) # downhill right
 
-    read_train_data(train_data,['j1','j2','j3','j5','j6','j8','j9'])
-    read_train_data(train_data,['k1','k2','k3'])
-    read_train_data(train_data,['k4','k5','j4','j7'])  # shade turn
-    read_train_data(train_data,['k6','k7','k8','k9'])  # downhill right
-    read_train_data(train_data,['l1','l2', 'l3']) # downhill right
-
+    # for testing
+    #
     # read_train_data(train_data,['j3'])
 
     train_data.preprocess()
@@ -199,7 +206,7 @@ else:
 
 
 #X_train, y_train  = train_data.get_all_train_data(side_steer=0.2)
-X_train, y_train  = train_data.get_train_data_straight_augmented(correction=0.065, correction_range=0.005)
+X_train, y_train  = train_data.get_train_data_straight_augmented(correction=0.065, correction_range=0.005, side_correction=0.1)
 
 
 print('X_train shape:',X_train.shape)
