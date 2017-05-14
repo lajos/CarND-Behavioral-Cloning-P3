@@ -98,6 +98,8 @@ My graphics card does not have enough memory to run NVIDA's model and their mode
 
 I have added [max pooling](https://keras.io/layers/pooling/#maxpooling2d) and [dropout](https://keras.io/layers/core/#dropout) layers to prevent overfitting. Convolutional layers use RELU activation to allow non-linear training.
 
+The model uses Adam optimizer with MSE (mean squared error) loss function.
+
 My initial model architecture:
 
 | layer                 |  parameters        | output       |
@@ -185,11 +187,6 @@ Youtube video:
 
 [![track1_1](./writeup-assets/track1_2_video.png)](https://youtu.be/2XNHo84qnU0 "track1_2")
 
----
-
-### Further improvements
-
-
 
 ---
 
@@ -197,13 +194,55 @@ Youtube video:
 
 ---
 
+### Challenges
+
+Track 2 is more challenging because the turns are sharper, the track is longer, there track changes to deep downhill sections where the camera can't see the road and there are more dynamic lighting situation.
+
+Due to my lacking experience with the game controller I collected data with the car running at 15 mph.
+
+---
+
+### Additional Preprocessing
+
+#### Shadows
+
+There are lighting scenarios where part or all of the track is in shadow. I've used CLAHE ([Contrast Limited Adaptive Histogram Equalization](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization)) on the lightness channel to minimize the affect of shadows.
+
+![lightness](writeup-assets/L.png)
+
+lighness channel
+
+![lightness with clahe](writeup-assets/L_CLAHE.png)
+
+lighness channel with CLAHE applied
+
+#### Roadside Distractions
+
+There are a lot of distracting features on the sides of the road, for example trees. To minimize this I have use a projection transformation to "un-tilt" the images:
+
+![untilt](writeup-assets/untilt.png)
+
+#### Tagging Good Samples
+
+NVIDIA's [End-to-End Deep Learning for Self-Driving Cars](https://devblogs.nvidia.com/parallelforall/deep-learning-self-driving-cars/) article mentions that they only use center lane driving samples. To make that sure I am training the model on good data, I wrote a small python program to play through the samples and tag samples to use or ignore.
+
+The **tag_data.py** script loads a folder of samples recorded by the simulator and displays the frames, frame numbers and steering angle in a window. The frames can be played forward and back (**left** and **right** arrow keys) and tagged for use (**up** arrow) or ignore (**down** arrow).
+
+The bottom bar's color indicates if a frame should be used: red for good data and gray for the sample to be ignored.
+
+The **return** key saves a driving_log_marked.csv file that has an extra boolean attribute.
+
+![data tagger](writeup-assets/data_tagger.jpg)
+
+The left image (frame 0, steering angle 0) should be ignored, the right image (frame 96, steering angle 0.8) should be used.
+
+---
+
 ### Model Architecture
 
-My model was inspired by NVIDIA's model from their [End-to-End Deep Learning for Self-Driving Cars](https://devblogs.nvidia.com/parallelforall/deep-learning-self-driving-cars/) article.
+I have changed the activation for convolutional layers to [ELU](http://image-net.org/challenges/posters/JKU_EN_RGB_Schwarz_poster.pdf), doubled the depth of convolutional layers and doubled the input image size to 32x160x3.
 
-My graphics card does not have enough memory to run NVIDA's model and their model required a specific input image size so I have reduced the number of [convolutional layers](https://keras.io/layers/convolutional/#conv2d) and changed the padding to 'same' to allow more flexible experimentation with input image sizes.
-
-I have added [max pooling](https://keras.io/layers/pooling/#maxpooling2d) and [dropout](https://keras.io/layers/core/#dropout) layers to prevent overfitting. Convolutional layers use [ELU](http://image-net.org/challenges/posters/JKU_EN_RGB_Schwarz_poster.pdf) activation to allow non-linear training.
+The data is reshuffled between epochs to avoid validating to the same set of images.
 
 My final model architecture:
 
@@ -230,92 +269,7 @@ My final model architecture:
 | Dense                 |                    | 1            |
 
 **Total parameters:** 1,411,583
+
 ---
 
-### Files Submitted
 
-#### 1. Submission includes all required files and can be used to run the simulator in autonomous mode
-
-My project includes the following files:
-* model.py containing the script to create and train the model
-* drive.py for driving the car in autonomous mode
-* model.h5 containing a trained convolution neural network
-* writeup_report.md or writeup_report.pdf summarizing the results
-
-### Model Architecture and Training Strategy
-
-####1. An appropriate model architecture has been employed
-
-My model consists of a convolution neural network with 3x3 filter sizes and depths between 32 and 128 (model.py lines 18-24)
-
-The model includes RELU layers to introduce nonlinearity (code line 20), and the data is normalized in the model using a Keras lambda layer (code line 18).
-
-####2. Attempts to reduce overfitting in the model
-
-The model contains dropout layers in order to reduce overfitting (model.py lines 21).
-
-The model was trained and validated on different data sets to ensure that the model was not overfitting (code line 10-16). The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
-
-####3. Model parameter tuning
-
-The model used an optimizer, so the learning rate was not tuned manually (model.py line 25).
-
-####4. Appropriate training data
-
-Training data was chosen to keep the vehicle driving on the road. I used a combination of center lane driving, recovering from the left and right sides of the road ...
-
-For details about how I created the training data, see the next section.
-
-###Model Architecture and Training Strategy
-
-####1. Solution Design Approach
-
-The overall strategy for deriving a model architecture was to ...
-
-My first step was to use a convolution neural network model similar to the ... I thought this model might be appropriate because ...
-
-In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set. I found that my first model had a low mean squared error on the training set but a high mean squared error on the validation set. This implied that the model was overfitting.
-
-To combat the overfitting, I modified the model so that ...
-
-Then I ...
-
-The final step was to run the simulator to see how well the car was driving around track one. There were a few spots where the vehicle fell off the track... to improve the driving behavior in these cases, I ....
-
-At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
-
-####2. Final Model Architecture
-
-The final model architecture (model.py lines 18-24) consisted of a convolution neural network with the following layers and layer sizes ...
-
-Here is a visualization of the architecture (note: visualizing the architecture is optional according to the project rubric)
-
-![alt text][image1]
-
-####3. Creation of the Training Set & Training Process
-
-To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving:
-
-![alt text][image2]
-
-I then recorded the vehicle recovering from the left side and right sides of the road back to center so that the vehicle would learn to .... These images show what a recovery looks like starting from ... :
-
-![alt text][image3]
-![alt text][image4]
-![alt text][image5]
-
-Then I repeated this process on track two in order to get more data points.
-
-To augment the data sat, I also flipped images and angles thinking that this would ... For example, here is an image that has then been flipped:
-
-![alt text][image6]
-![alt text][image7]
-
-Etc ....
-
-After the collection process, I had X number of data points. I then preprocessed this data by ...
-
-
-I finally randomly shuffled the data set and put Y% of the data into a validation set.
-
-I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was Z as evidenced by ... I used an adam optimizer so that manually training the learning rate wasn't necessary.

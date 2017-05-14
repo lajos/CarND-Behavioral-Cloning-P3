@@ -114,7 +114,7 @@ def preprocess(img):
     return(img)
 
 if __name__=='__main__':
-    img = cv2.imread('test3.jpg')
+    img = cv2.imread('test5.jpg')
     print('input image shape: ',img.shape)
 
 #     img = img_resize(img)
@@ -138,10 +138,16 @@ if __name__=='__main__':
     # cv2.imwrite('stuff/b.png', b)
     # cv2.imwrite('stuff/g.png', g)
 
-    img = img_rgb2HLS(img)
-    img = img_crop(img)
-    s,l,h = cv2.split(img)
-    cv2.imwrite('stuff/temp.png', l)
+    #img = img_rgb2HLS(img)
+#    img = img_crop(img)
+    # s,l,h = cv2.split(img)
+    # clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(20,20))
+    # l = clahe.apply(l)
+    # cv2.imwrite('stuff/temp.png', l)
+    # img = cv2.merge((l,l,l))
+
+    img = img_untilt(img, distance=150)
+    cv2.imwrite('stuff/temp.png', img)
 
     # s,l,h = cv2.split(img)
     # cv2.imwrite('stuff/h.png', h)
