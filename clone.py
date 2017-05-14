@@ -11,6 +11,7 @@ _training_data_root = 'training_data'
 
 _cameras = { 0: 'center', 1: 'left', 2: 'right'}
 
+_batch_size = 256
 
 def print_progress_bar (iteration, total, prefix = 'progress:', suffix = ' ', decimals = 1, length = 30, fill = '='):
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
@@ -109,6 +110,62 @@ class TrainData:
         print('    augmented samples   :',len(steer))
         return(np.array(images), np.array(steer))
 
+    def sample_no_steer(self, i):
+        correction = 0.065
+        correction_range = 0.005
+        c=random.uniform(correction-correction_range, correction+correction_range)
+        r = random.randrange(2)
+        if r==0:
+            return(self.images[1][i], c)
+        else:
+            return(self.images[2][i], -c)
+
+    def sample_with_steer(self, i):
+        side_correction = 0.2
+        r = random.randrange(6)
+        if r==0:
+            return(self.images[0][i], self.steer[i])
+        elif r==1:
+            return(np.fliplr(self.images[0][i]), -self.steer[i])
+        elif r==2:
+            return(self.images[1][i], min(1,self.steer[i]+side_correction))
+        elif r==3:
+            return(self.images[2][i], max(-1,self.steer[i]-side_correction))
+        elif r==4:
+            return(np.fliplr(self.images[1][i]), -(min(1,self.steer[i]+side_correction)))
+        elif r==5:
+            return(np.fliplr(self.images[2][i]), -(max(-1,self.steer[i]-side_correction)))
+
+    def sample_generator(self):
+        while 1:
+            images = []
+            steers = []
+            for o in range(_batch_size):
+                i = random.randrange(len(self.steer))
+                s = self.steer[i]
+                if abs(s)<0.001:
+                    image, steer = self.sample_no_steer(i)
+                else:
+                    image, steer = self.sample_with_steer(i)
+                images.append(image)
+                steers.append(steer)
+            yield(np.array(images), np.array(steers))
+
+
+    def get_augmented_size(self):
+        steer = np.array(self.steer)
+        n_zero_steer = len(np.where(abs(steer)<0.001)[0])
+        n_with_steer = len(steer) - n_zero_steer
+        n_aug_samples = 2*n_zero_steer + 6*n_with_steer
+        print('    samples             :',len(steer))
+        print('    no steer samples    :',n_zero_steer)
+        print('    with steer samples  :',n_with_steer)
+        print('    augmented samples   :',n_aug_samples)
+        return(n_aug_samples)
+
+    def get_image_shape(self):
+        return self.images[0][0].shape
+
     def pickle(self):
         import pickle
         pickle.dump(self.images, open('images.p', 'wb'))
@@ -118,6 +175,7 @@ class TrainData:
         import pickle
         self.images = pickle.load(open('images.p', 'rb'))
         self.steer = pickle.load(open('steer.p', 'rb'))
+
 
 def get_csv_len(csv_filename):
     with open(csv_filename, 'r') as f:
@@ -174,44 +232,29 @@ train_data = TrainData()
 
 _reload_data = True
 
+import time
+start_time = time.time()
+
 if _reload_data:
-
-    # track1
-    #
-    read_train_data(train_data,['2','2_rev','3','4','5'])
-    read_train_data(train_data,['11'])
-    read_train_data(train_data,['11_rev'])
-    read_train_data(train_data,['11_bridge'])
-    read_train_data(train_data,['11_right'])
-    read_train_data(train_data,['11_left'])
-    read_train_data(train_data,['21'])
-    read_train_data(train_data,['21_rev'])
-
-    # track2
-    # read_train_data(train_data,['21'])
-    # read_train_data(train_data,['j1','j2','j3','j5','j6','j8','j9'])
-    # read_train_data(train_data,['k1','k2','k3'])
-    # read_train_data(train_data,['k4','k5','j4','j7'])  # shade turn
-    # read_train_data(train_data,['k6','k7','k8','k9'])  # downhill right
-    # read_train_data(train_data,['l1','l2', 'l3']) # downhill right
-
-    # for testing
-    #
-    # read_train_data(train_data,['j3'])
+    read_train_data(train_data,['j1','j2','j3','j5','j6','j8','j9'])
+    read_train_data(train_data,['k1','k2','k3'])
+    read_train_data(train_data,['k4','k5','j4','j7'])  # shade turn
+    read_train_data(train_data,['k6','k7','k8','k9'])  # downhill right
+    read_train_data(train_data,['l1','l2', 'l3']) # downhill right
+    read_train_data(train_data,['m1','m2', 'm3']) # shade left
+    read_train_data(train_data,['n1','n2', 'n3', 'n4']) # shade right
 
     train_data.preprocess()
+
     train_data.pickle()
 else:
     train_data.unpickle()
 
 
-#X_train, y_train  = train_data.get_all_train_data(side_steer=0.2)
-X_train, y_train  = train_data.get_train_data_straight_augmented(correction=0.065, correction_range=0.005, side_correction=0.1)
+input_shape = train_data.get_image_shape()
+print('input shape:',input_shape)
 
-
-print('X_train shape:',X_train.shape)
-print('y_train shape:',y_train.shape)
-print('X_train image shape:',X_train[0].shape)
+n_samples = train_data.get_augmented_size()
 
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda, Cropping2D, Convolution2D, Dropout, MaxPooling2D
@@ -220,7 +263,8 @@ from keras import regularizers
 _dropout=0.2
 
 model = Sequential()
-model.add(Convolution2D(8, (5, 5), activation='elu', padding='same', input_shape=X_train.shape[1:]))
+model.add(Lambda(lambda x: (x / 255.0) - 0.5, input_shape=input_shape))
+model.add(Convolution2D(8, (5, 5), activation='elu', padding='same'))
 model.add(MaxPooling2D())
 model.add(Dropout(_dropout))
 model.add(Convolution2D(16, (3, 3), activation='elu', padding='same'))
@@ -232,23 +276,6 @@ model.add(Dropout(_dropout))
 model.add(Convolution2D(64, (3, 3), activation='elu', padding='same'))
 model.add(MaxPooling2D())
 model.add(Dropout(_dropout))
-
-# nvidia
-# model.add(Convolution2D(3, (5, 5), strides=(2,2), activation='elu',input_shape=X_train.shape[1:]))
-# model.add(Convolution2D(24, (5, 5), strides=(2,2), activation='elu'))
-# model.add(Convolution2D(36, (5, 5), strides=(2,2), activation='elu'))
-# model.add(Convolution2D(48, (3, 3), activation='elu'))
-# model.add(Convolution2D(64, (3, 3), activation='elu'))
-
-# _l2_reg = 0.001
-
-# model.add(Flatten())
-# model.add(Dense(1000, kernel_regularizer=regularizers.l2(_l2_reg)))
-# model.add(Dense(100, kernel_regularizer=regularizers.l2(_l2_reg)))
-# model.add(Dense(50, kernel_regularizer=regularizers.l2(_l2_reg)))
-# model.add(Dense(10, kernel_regularizer=regularizers.l2(_l2_reg)))
-# model.add(Dense(1))
-
 model.add(Flatten())
 model.add(Dense(1000))
 model.add(Dense(100))
@@ -262,11 +289,14 @@ print(model.summary())
 
 for i in range(48):
     print('.epoch:',i+1)
-    X_train, y_train = shuffle(X_train, y_train)
-    model.fit(X_train, y_train, validation_split=0.2, shuffle=False, epochs=1)
+    model.fit_generator(generator=train_data.sample_generator(),
+        validation_data=train_data.sample_generator(),
+        steps_per_epoch=int(n_samples/_batch_size*0.8),
+        validation_steps=int(n_samples/_batch_size*0.2),
+        epochs=1)
     if i>25:
        model.save('model.{:02d}.h5'.format(i))
-    # sys.exit(0)
+
 
 model.save('model.h5')
 

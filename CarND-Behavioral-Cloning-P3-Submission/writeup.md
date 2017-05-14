@@ -1,4 +1,115 @@
-# **Behavioral Cloning**
+# **Behavioral Cloning Resubmission**
+
+---
+
+## Resubmission Notes
+
+My previous submission was rejected for these reasons:
+* normalized images outside of Keras
+* did not use a generator
+
+### Normalizing Outside of Keras
+
+The reason why I normalized the images as part of preprocessing instead of using `Keras` was that due to a bug in `Keras`, `Lambda` layers cannot be saved on Windows.
+
+When running this code:
+```python
+from keras.models import Sequential
+from keras.layers import Lambda
+
+model = Sequential()
+model.add(Lambda(lambda x: (x/255.0)-0.5, input_shape = (2,2)))
+
+model.save('model.h5')
+```
+
+Python throws the following error:
+
+```
+Traceback (most recent call last):
+  File "c:\Projects\udacity\carnd\tmp\test.py", line 7, in <module>
+    model.save('model.h5')
+  File "C:\Dev\miniconda3\envs\carnd-term1\lib\site-packages\keras\engine\topology.py", line 2416, in save
+    save_model(self, filepath, overwrite)
+  File "C:\Dev\miniconda3\envs\carnd-term1\lib\site-packages\keras\models.py", line 101, in save_model
+    'config': model.get_config()
+  File "C:\Dev\miniconda3\envs\carnd-term1\lib\site-packages\keras\models.py", line 1176, in get_config
+    'config': layer.get_config()})
+  File "C:\Dev\miniconda3\envs\carnd-term1\lib\site-packages\keras\layers\core.py", line 668, in get_config
+    function = func_dump(self.function)
+  File "C:\Dev\miniconda3\envs\carnd-term1\lib\site-packages\keras\utils\generic_utils.py", line 177, in func_dump
+    code = marshal.dumps(func.__code__).decode('raw_unicode_escape')
+UnicodeDecodeError: 'rawunicodeescape' codec can't decode bytes in position 89-93: truncated \uXXXX
+```
+
+I ran into this bug early on while working on the project. I have fixed the bug locally, but I was afraid that my project files would not work during review, so I abandoned using `Lambda` layers. The fix:
+
+Modify the following line in keras/utils/generic_utils.py:
+
+```
+code = marshal.dumps(func.__code__).decode('raw_unicode_escape')
+```
+
+To:
+
+```
+code = marshal.dumps(func.__code__).replace(b'\\',b'/').decode('raw_unicode_escape')
+```
+
+My submission includes `test.py` that reproduces the issue with the current version of `Keras`.
+
+---
+
+### Not Using a Generator
+
+Project rubric: *"The code in model.py uses a Python generator, **if needed**, to generate data for training rather than storing the training data in memory."*
+
+This sounds optional, not a requirement, to get around low memory issues. While working on this project it fit into memory comfortably, so I did not implement a generator.
+
+![memory usage](writeup-assets/memory.png)
+
+This screenshot shows the memory usage while training track2 with around 90k images. The spikes are `sklearn` reshuffling the data between epochs. Even during those spikes there is about 25% unused memory.
+
+### Resubmission
+
+I have removed the image normalization from preprocessing and added it to the model as a `Lambda` layer.
+
+I implemented a sample generator for data augmentation. The generator also supports batching.
+
+The resubmitted files are located in the `track2_resubmit` folder:
+* **clone.py** - model training
+* **drive.py** - steering prediction for simulator
+* **preprocess.py** - image preprocessing used by clone.py and drive.py
+* **test.py** - Keras library bug test while saving Lambda layers
+* **model.h5** - Keras model data
+* **track2_15.mp4** - screen recording from simulator @15mph
+* **track2_20.mp4** - screen recording from simulator @20mph
+* **track2_28.mp4** - screen recording from simulator @28mph
+
+### Resubmission Results
+
+---
+
+Youtube video driving at 15mph, the driving samples were recorded at this speed:
+
+[![track2 @15mph](./writeup-assets/track2_15.png)](https://youtu.be/I0-fxBHEar0 "track2 @15mph")
+
+---
+
+Youtube video driving at 20mph, this is 33% faster than the sample collection speed. The car oversteers, but is able to recover:
+
+[![track2 @20mph](./writeup-assets/track2_20.png)](https://youtu.be/CLuOzqIrfIU "track2 @20mph")
+
+---
+
+Youtube video driving at 28mph, this is 87% faster than the sample collection speed. The car oversteers even more and at some point one of the rear wheels leave the road, but the car recovers. I recorded this clip only to see how far the model can be pushed:
+
+[![track2 @25mph](./writeup-assets/track2_25.png)](https://youtu.be/r8nMST9UtVs "track2 @28mph")
+
+
+---
+
+# Original Writeup of the Project Follows
 
 ---
 

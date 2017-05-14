@@ -25,10 +25,8 @@ def img_normalize(img):
     return(img/255.0)
 
 #percent of image
-#_top_crop = 0.35
 _top_crop = 0.45
 _bottom_crop = 0.15
-#_bottom_crop = 0.0
 
 def img_crop(img):
     height = int((1.0-_top_crop-_bottom_crop)*img.shape[0])
@@ -77,25 +75,6 @@ def img_untilt2(img, distance=5):
     return cv2.warpPerspective(img,M,(w,h), flags=cv2.INTER_NEAREST)
 
 def preprocess(img):
-    # img = img_resize(img)
-    # img = img_crop(img)
-    # img = img_rgb2HLS(img)
-    # img = img_normalize(img)
-    # img_unsharp_mask(img)
-
-    # img = img_resize(img)
-    # img = img_crop(img)
-    # b,g,r = cv2.split(img)
-    # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4,4))
-    # #clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8,8))
-    # b = clahe.apply(b)
-    # g = clahe.apply(g)
-    # r = clahe.apply(r)
-    # img=cv2.merge((b,g,r))
-    # img = img_rgb2HLS(img)
-    # img = img_normalize(img)
-    # img_unsharp_mask(img)
-
     img = img_resize(img)
     img = img_crop(img)
     img = img_untilt2(img,distance=80)
@@ -104,56 +83,17 @@ def preprocess(img):
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12,12))
     g = clahe.apply(g)
     img=cv2.merge((b,g,r))
-    img = img_normalize(img)
     img_unsharp_mask(img)
-
-    img=img-0.5
 
     if len(img.shape)==2:
         img = img[:,:,None]
     return(img)
 
 if __name__=='__main__':
-    img = cv2.imread('test5.jpg')
+    img = cv2.imread('test2.jpg')
     print('input image shape: ',img.shape)
 
-#     img = img_resize(img)
-#     img = img_crop(img)
-#     img = img_untilt2(img,distance=50)
-#     img = img_rgb2HLS(img)
-#     b,g,r = cv2.split(img)
-#     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12,12))
-# #    b = clahe.apply(b)
-#     g = clahe.apply(g)
-# #    r = clahe.apply(r)
-#     img=cv2.merge((g,g,g))
-# #    img =img_pad(img)
-
-#    img = np.fliplr(img)
-
- #   img_unsharp_mask(img)
-
-    # b,g,r = cv2.split(img)
-    # cv2.imwrite('stuff/r.png', r)
-    # cv2.imwrite('stuff/b.png', b)
-    # cv2.imwrite('stuff/g.png', g)
-
-    #img = img_rgb2HLS(img)
-#    img = img_crop(img)
-    # s,l,h = cv2.split(img)
-    # clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(20,20))
-    # l = clahe.apply(l)
-    # cv2.imwrite('stuff/temp.png', l)
-    # img = cv2.merge((l,l,l))
-
-    img = img_untilt(img, distance=150)
-    cv2.imwrite('stuff/temp.png', img)
-
-    # s,l,h = cv2.split(img)
-    # cv2.imwrite('stuff/h.png', h)
-    # cv2.imwrite('stuff/s.png', s)
-    # cv2.imwrite('stuff/l.png', l)
-
+    img = np.fliplr(img)
 
     print('output image shape: ',img.shape)
     cv2.imshow('test image', img)
