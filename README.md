@@ -1,118 +1,370 @@
-# Behaviorial Cloning Project
+# **Behavioral Cloning**
 
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
-
-Overview
 ---
-This repository contains starting files for the Behavioral Cloning Project.
 
-In this project, you will use what you've learned about deep neural networks and convolutional neural networks to clone driving behavior. You will train, validate and test a model using Keras. The model will output a steering angle to an autonomous vehicle.
+## Project
 
-We have provided a simulator where you can steer a car around a track for data collection. You'll use image data and steering angles to train a neural network and then use this model to drive the car autonomously around the track.
-
-We also want you to create a detailed writeup of the project. Check out the [writeup template](https://github.com/udacity/CarND-Behavioral-Cloning-P3/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup. The writeup can be either a markdown file or a pdf document.
-
-To meet specifications, the project will require submitting five files: 
-* model.py (script used to create and train the model)
-* drive.py (script to drive the car - feel free to modify this file)
-* model.h5 (a trained Keras model)
-* a report writeup file (either markdown or pdf)
-* video.mp4 (a video recording of your vehicle driving autonomously around the track for at least one full lap)
-
-This README file describes how to output the video in the "Details About Files In This Directory" section.
-
-Creating a Great Writeup
----
-A great writeup should include the [rubric points](https://review.udacity.com/#!/rubrics/432/view) as well as your description of how you addressed each point.  You should include a detailed description of the code used (with line-number references and code snippets where necessary), and links to other supporting documents or external references.  You should include images in your writeup to demonstrate how your code works with examples.  
-
-All that said, please be concise!  We're not looking for you to write a book here, just a brief description of how you passed each rubric point, and references to the relevant code :). 
-
-You're not required to use markdown for your writeup.  If you use another method please just submit a pdf of your writeup.
-
-The Project
----
 The goals / steps of this project are the following:
-* Use the simulator to collect data of good driving behavior 
-* Design, train and validate a model that predicts a steering angle from image data
-* Use the model to drive the vehicle autonomously around the first track in the simulator. The vehicle should remain on the road for an entire loop around the track.
+* Use the simulator to collect data of good driving behavior
+* Build, a convolution neural network in Keras that predicts steering values from images
+* Train and validate the model with a training and validation set
+* Test that the model successfully drives around track one without leaving the road
 * Summarize the results with a written report
 
-### Dependencies
-This lab requires:
+---
 
-* [CarND Term1 Starter Kit](https://github.com/udacity/CarND-Term1-Starter-Kit)
+## Simulator
 
-The lab enviroment can be created with CarND Term1 Starter Kit. Click [here](https://github.com/udacity/CarND-Term1-Starter-Kit/blob/master/README.md) for the details.
+Udacity provided a simulator with 2 tracks.
 
-The following resources can be found in this github repository:
-* drive.py
-* video.py
-* writeup_template.md
+![simulator](writeup-assets/simulator.jpg)
 
-The simulator can be downloaded from the classroom. In the classroom, we have also provided sample data that you can optionally use to help train your model.
+The simulator has two modes:
+* **Training:** In training mode the car can be driven around the tracks by the user and the simulator records three images mounted in the center, left and right of the car and steering value, throttle, brake and speed values for each frame.
+* **Autonomous:** In autonomous mode the simulator connects to an external program (drive.py), sends the image from the center mounted camera, the current speed and throttle position. The **drive.py** program uses the image to predict the steering value based on a trained [Keras](https://github.com/fchollet/keras) model and calculates the updated throttle position to maintain a predefined speed. The steering value and throttle position are then sent back to the simulator.
 
-## Details About Files In This Directory
+---
 
-### `drive.py`
+## Track 1
 
-Usage of `drive.py` requires you have saved the trained model as an h5 file, i.e. `model.h5`. See the [Keras documentation](https://keras.io/getting-started/faq/#how-can-i-save-a-keras-model) for how to create this file using the following command:
-```sh
-model.save(filepath)
-```
+---
 
-Once the model has been saved, it can be used with drive.py using this command:
+### Training Data Collection
 
-```sh
-python drive.py model.h5
-```
+After some failures and experimentation it became apparent that the quality of the training data is important to successfuly train the model.
 
-The above command will load the trained model and use the model to make predictions on individual images in real-time and send the predicted angle back to the server via a websocket connection.
+I have found the XBOX controller to work best as an input method, but I don't play video games so it's been a challenge to drive the car around the track in the middle of the lane. I decided to "improve" the analog stick by attaching a 3d printed extension.
 
-Note: There is known local system's setting issue with replacing "," with "." when using drive.py. When this happens it can make predicted steering values clipped to max/min values. If this occurs, a known fix for this is to add "export LANG=en_US.utf8" to the bashrc file.
+![xbox controller extension](writeup-assets/controller.jpg)
 
-#### Saving a video of the autonomous agent
+Data collected:
+* 2 laps in normal direction, trying to stay in center of lane
+* 2 laps in reverse direction
+* recovery clips for exiting first turn, entering bridge, sharp turns
 
-```sh
-python drive.py model.h5 run1
-```
+---
 
-The fourth argument `run1` is the directory to save the images seen by the agent to. If the directory already exists it'll be overwritten.
+### Preprocessing
 
-```sh
-ls run1
+I created a separate preprocessing module (preprocess.py) to make sure that images are preprocessed the same way during training and prediction.
 
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_424.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_451.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_477.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_528.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_573.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_618.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_697.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_723.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_749.jpg
-[2017-01-09 16:10:23 EST]  12KiB 2017_01_09_21_10_23_817.jpg
-...
-```
+I tested several image spaces and found that converting the images to [HLS](https://en.wikipedia.org/wiki/HSL_and_HSV) provided the greatest improvement. This is one of the recorded images in RGB and HLS (displayed hue displayed as red, lightness as green, saturation as blue):
 
-The image file name is a timestamp when the image image was seen. This information is used by `video.py` to create a chronological video of the agent driving.
+![rgb and hls](writeup-assets/rgb_hls.jpg)
 
-### `video.py`
+I also cropped the bottom and top of the images to get rig of the front of the car and sky (lightness channel only):
 
-```sh
-python video.py run1
-```
+![cropping](writeup-assets/crop.png)
 
-Create a video based on images found in the `run1` directory. The name of the video will be name of the directory following by `'.mp4'`, so, in this case the video will be `run1.mp4`.
+Images are resized to 25% of their size (20,80,3) and normalized to zero mean and unit variance (values -0.5...0.5).
 
-Optionally one can specify the FPS (frames per second) of the video:
+---
 
-```sh
-python video.py run1 --fps 48
-```
+### Statistics
+* samples colleted: 4,866
+* samples driving straight: 1,068
+* images with steering: 3,798
+* augmented samples: **9,732**
+* model trained for 16 epochs
 
-The video will run at 48 FPS. The default FPS is 60.
+---
 
-#### Why create a video
+### Data augmentation
 
-1. It's been noted the simulator might perform differently based on the hardware. So if your model drives succesfully on your machine it might not on another machine (your reviewer). Saving a video is a solid backup in case this happens.
-2. You could slightly alter the code in `drive.py` and/or `video.py` to create a video of what your model sees after the image is processed (may be helpful for debugging).
+When the steering wheel is centered (absolute value of steering is less than 0.001) I used the left and right camera images only with a low steering value to steer the car towards the center:
+
+![left camera](writeup-assets/track1l.jpg)
+
+*left camera, steering value 0.065*
+
+![right camera](writeup-assets/track1r.jpg)
+
+*right camera, steering value -0.065*
+
+When the steering wheel is turned, only the center image is used. To make sure that the data set is balanced for left and right steering values, the image is also flipped horizontally and the steering value's sign negated:
+
+![center camera](writeup-assets/track1a.jpg)
+
+*center camera, steering value -0.5*
+
+![center camera flipped](writeup-assets/track1b.jpg)
+
+*flipped center camera, steering value 0.5*
+
+---
+
+### Initial model
+
+My model was inspired by NVIDIA's model from their [End-to-End Deep Learning for Self-Driving Cars](https://devblogs.nvidia.com/parallelforall/deep-learning-self-driving-cars/) article.
+
+My graphics card does not have enough memory to run NVIDA's model and their model required a specific input image size so I have reduced the number of [convolutional layers](https://keras.io/layers/convolutional/#conv2d) and changed the padding to 'same' to allow more flexible experimentation with input image sizes.
+
+I have added [max pooling](https://keras.io/layers/pooling/#maxpooling2d) and [dropout](https://keras.io/layers/core/#dropout) layers to prevent overfitting. Convolutional layers use RELU activation to allow non-linear training.
+
+The model uses Adam optimizer with MSE (mean squared error) loss function.
+
+My initial model architecture:
+
+| layer                 |  parameters        | output       |
+|:---------------------:|:------------------:|:------------:|
+| Input                 | image              | 20, 80, 3    |
+| Convolution RELU 1    | K=3, S=1, D=16     | 20, 80, 16   |
+| MaxPooling            | K=2, S=2           | 10, 40, 16   |
+| Convolution RELU 2    | K=3, S=1, D=32     | 10, 40, 32   |
+| MaxPooling            | K=2, S=2           | 5, 20, 32    |
+| Convolution RELU 3    | K=3, S=1, D=64     | 5, 20, 64    |
+| MaxPooling            | K=2, S=2           | 2, 10, 64    |
+| Dropout               | 0.2                |              |
+| Flatten               |                    | 1280         |
+| Dense                 |                    | 1000         |
+| Dense                 |                    | 100          |
+| Dense                 |                    | 50           |
+| Dense                 |                    | 10           |
+| Dense                 |                    | 1            |
+
+**Total parameters:** 1,410,255
+
+The model uses 20% of the samples for validation.
+
+---
+
+### Initial Result
+
+The assets are located in the **track1_1** folder:
+* **clone.py** - model training
+* **drive.py** - steering prediction for simulator
+* **preprocess.py** - image preprocessing used by clone.py and drive.py
+* **model.h5** - keras model data
+* **track1_1.mp4** - screen recording from simulator
+
+Youtube video:
+
+[![track1_1](./writeup-assets/track1_1_video.png)](https://youtu.be/5jPmGliQQh8 "track1_1")
+
+---
+
+### Improvements
+
+I wanted to improve on my initial result because the car was not driving very smoothly. I collected additional driving data by driving the car around the track an additional time.
+
+---
+
+### Statistics
+* samples colleted: 7,540
+* samples driving straight: 1,957
+* images with steering: 5,583
+* augmented samples: **15,080**
+* model trained for 17 epochs
+
+I also added another convolutional layer and dropouts after each convolution. My revised model:
+
+| layer                 |  parameters        | output       |
+|:---------------------:|:------------------:|:------------:|
+| Input                 | image              | 20, 80, 3    |
+| Convolution RELU 1    | K=3, S=1, D=8      | 20, 80, 8    |
+| MaxPooling            | K=2, S=2           | 10, 40, 8    |
+| Dropout               | 0.1                |              |
+| Convolution RELU 2    | K=3, S=1, D=16     | 10, 40, 16   |
+| MaxPooling            | K=2, S=2           | 5, 20, 16    |
+| Dropout               | 0.1                |              |
+| Convolution RELU 3    | K=3, S=1, D=32     | 5, 20, 32    |
+| MaxPooling            | K=2, S=2           | 2, 10, 32    |
+| Dropout               | 0.1                |              |
+| Convolution RELU 4    | K=3, S=1, D=64     | 2, 10, 64    |
+| MaxPooling            | K=2, S=2           | 1, 5, 64     |
+| Dropout               | 0.1                |              |
+| Flatten               |                    | 1280         |
+| Dense                 |                    | 1000         |
+| Dense                 |                    | 100          |
+| Dense                 |                    | 50           |
+| Dense                 |                    | 10           |
+| Dense                 |                    | 1            |
+
+**Total parameters:** 451,199
+
+The assets are located in the **track1_2** folder:
+* **clone.py** - model training
+* **drive.py** - steering prediction for simulator
+* **preprocess.py** - image preprocessing used by clone.py and drive.py
+* **model.h5** - keras model data
+* **track1_2.mp4** - screen recording from simulator
+
+Youtube video:
+
+[![track1_1](./writeup-assets/track1_2_video.png)](https://youtu.be/2XNHo84qnU0 "track1_2")
+
+
+---
+
+## Track 2
+
+---
+
+### Challenges
+
+Track 2 is more challenging because the turns are sharper, the track is longer, there track changes to deep downhill sections where the camera can't see the road and there are more dynamic lighting situations.
+
+Due to my lacking experience with the game controller I collected data with the car running at 15 mph.
+
+---
+
+### Additional Preprocessing
+
+#### Shadows
+
+There are lighting scenarios where part or all of the track is in shadow. I have used CLAHE ([Contrast Limited Adaptive Histogram Equalization](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization)) on the lightness channel to minimize the affect of shadows.
+
+![lightness](writeup-assets/L.png)
+
+*lighness channel*
+
+![lightness with clahe](writeup-assets/L_CLAHE.png)
+
+*lighness channel with CLAHE applied*
+
+#### Roadside Distractions
+
+There are a lot of distracting features on the sides, for example trees. To minimize this I have use a projection transformation to "un-tilt" the images:
+
+![untilt](writeup-assets/untilt.png)
+
+#### Tagging Good Samples
+
+NVIDIA's [End-to-End Deep Learning for Self-Driving Cars](https://devblogs.nvidia.com/parallelforall/deep-learning-self-driving-cars/) article mentions that they only use center lane driving samples. To make that sure I am training the model on good data, I wrote a small python program to play through the samples and tag samples to use or ignore.
+
+The **tag_data.py** script loads a folder of samples recorded by the simulator and displays the frames, frame numbers and steering values in a window. The frames can be played forward and back (**left** and **right arrow** keys) and tagged for use (**up arrow**) or ignore (**down arrow**).
+
+The bottom bar's color indicates if a frame should be used: red for good data and gray for the sample to be ignored.
+
+The **return** key saves a driving_log_marked.csv file that has an extra boolean attribute to indicate if the sample should be used.
+
+![data tagger](writeup-assets/data_tagger.jpg)
+
+*the left image (frame 0, steering value 0) is ignored, the right image (frame 96, steering value 0.8) is used*
+
+#### Side Cameras
+
+The simulator records images from 3 cameras: center, left, right.
+
+I used the images from the side cameras with a steering offset. The center cameras's steering value for the left camera's are increased by 0.2, the right cameras reduced by 0.2.
+
+![center](writeup-assets/center.jpg)
+
+*center camera, steering value 0.3*
+
+![left](writeup-assets/left.jpg)
+
+*left camera, steering value 0.3+0.2=0.5*
+
+![right](writeup-assets/right.jpg)
+
+*right camera, steering value 0.3-0.2=0.1*
+
+#### Samples While Autonomous
+
+There were some tricky turns where the car got into trouble no matter how many clips I recorder in training mode.
+
+![tricky](writeup-assets/tricky.jpg)
+
+*in this turn the camera can't see the road because it turns and descends*
+
+For these situations I recorded images in autonomous mode and assigned a steering value that seemed appropriate.
+
+#### Data Augmentation
+
+The following images were added to the training set:
+
+If the steering value is close to zero:
+* left camera, steering value of 0.065
+* right camera, steering value -0.065
+
+If the magnitude of steering value is greater than zero:
+* center camera, steering value as recorded
+* center camera flipped horizontally, steering value negated
+* left camera, steering value + 0.2
+* left camera flipped, -(steering value + 0.2)
+* right camera, steering value - 0.2
+* right camera flipped, -(steering value - 0.2)
+
+---
+
+### Statistics
+* samples colleted: 16,477
+* samples driving straight: 2,772
+* images with steering: 13,705
+* augmented samples: **87,774**
+* model trained for 34 epochs
+
+---
+
+### Model Architecture
+
+I have changed the activation for convolutional layers to [ELU](http://image-net.org/challenges/posters/JKU_EN_RGB_Schwarz_poster.pdf), doubled the depth of convolutional layers and doubled the input image size to 32x160x3.
+
+The data is reshuffled between epochs to avoid validating to the same set of images.
+
+My final model architecture:
+
+| layer                 |  parameters        | output       |
+|:---------------------:|:------------------:|:------------:|
+| Input                 | image              | 32, 160, 3   |
+| Convolution ELU 1     | K=3, S=1, D=8      | 32, 160, 8   |
+| MaxPooling            | K=2, S=2           | 16, 80, 8    |
+| Dropout               | 0.2                |              |
+| Convolution ELU 2     | K=3, S=1, D=16     | 16, 80, 16   |
+| MaxPooling            | K=2, S=2           | 8, 40, 16    |
+| Dropout               | 0.2                |              |
+| Convolution ELU 3     | K=3, S=1, D=32     | 8, 40, 32    |
+| MaxPooling            | K=2, S=2           | 4, 20, 32    |
+| Dropout               | 0.2                |              |
+| Convolution ELU 4     | K=3, S=1, D=64     | 4, 20, 64    |
+| MaxPooling            | K=2, S=2           | 2, 10, 64    |
+| Dropout               | 0.2                |              |
+| Flatten               |                    | 1280         |
+| Dense                 |                    | 1000         |
+| Dense                 |                    | 100          |
+| Dense                 |                    | 50           |
+| Dense                 |                    | 10           |
+| Dense                 |                    | 1            |
+
+**Total parameters:** 1,411,583
+
+---
+
+### Results
+
+The assets are located in the **track2** folder:
+* **clone.py** - model training
+* **drive.py** - steering prediction for simulator
+* **preprocess.py** - image preprocessing used by clone.py and drive.py
+* **tag_data.py** - script for tagging samples
+* **model.h5** - keras model data
+* **track2_15.mp4** - screen recording from simulator at 15mph
+* **track2_20.mp4** - screen recording from simulator at 20mph
+* **track2_25.mp4** - screen recording from simulator at 25mph
+
+---
+
+Youtube video driving at 15mph, the driving samples were recorded at this speed:
+
+[![track2 @15mph](./writeup-assets/track2_15.png)](https://youtu.be/ztb1CK3CLtU "track2 @15mph")
+
+---
+
+Youtube video driving at 20mph, this is 33% faster than the sample collection speed. The car oversteers, but is able to recover:
+
+[![track2 @20mph](./writeup-assets/track2_20.png)](https://youtu.be/YaDN41ilTG4 "track2 @20mph")
+
+---
+
+Youtube video driving at 20mph, this is 66% faster than the sample collection speed. The car oversteers even more, but it stays on the road. This is the highest speed this model can drive:
+
+[![track2 @25mph](./writeup-assets/track2_25.png)](https://youtu.be/0NYE1wGkuz0 "track2 @25mph")
+
+---
+
+### Github Repo of Project
+
+[lajos/CarND-Behavioral-Cloning-P3](https://github.com/lajos/CarND-Behavioral-Cloning-P3)
+
+---

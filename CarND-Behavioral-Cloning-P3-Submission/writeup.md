@@ -6,7 +6,7 @@
 
 The goals / steps of this project are the following:
 * Use the simulator to collect data of good driving behavior
-* Build, a convolution neural network in Keras that predicts steering angles from images
+* Build, a convolution neural network in Keras that predicts steering values from images
 * Train and validate the model with a training and validation set
 * Test that the model successfully drives around track one without leaving the road
 * Summarize the results with a written report
@@ -20,8 +20,8 @@ Udacity provided a simulator with 2 tracks.
 ![simulator](writeup-assets/simulator.jpg)
 
 The simulator has two modes:
-* **Training:** In training mode the car can be driven around the tracks by the user and the simulator records three images mounted in the center, left and right of the car and steering angle, throttle, brake and speed values for each frame.
-* **Autonomous:** In autonomous mode the simulator connects to an external program (drive.py), sends the image from the center mounted camera, the current speed and throttle position. The drive.py program uses the image to predict the steering angle based on a trained [Keras](https://github.com/fchollet/keras) model and calculates the updated throttle position to maintain a predefined speed. The steering angle and throttle position are then sent back to the simulator.
+* **Training:** In training mode the car can be driven around the tracks by the user and the simulator records three images mounted in the center, left and right of the car and steering value, throttle, brake and speed values for each frame.
+* **Autonomous:** In autonomous mode the simulator connects to an external program (drive.py), sends the image from the center mounted camera, the current speed and throttle position. The **drive.py** program uses the image to predict the steering value based on a trained [Keras](https://github.com/fchollet/keras) model and calculates the updated throttle position to maintain a predefined speed. The steering value and throttle position are then sent back to the simulator.
 
 ---
 
@@ -48,7 +48,7 @@ Data collected:
 
 I created a separate preprocessing module (preprocess.py) to make sure that images are preprocessed the same way during training and prediction.
 
-I tested several image spaces and found that converting the images to HLS provided the greatest improvement. This is one of the recorded images in RGB and HLS (displayed hue displayed as red, lightness as green, saturation as blue):
+I tested several image spaces and found that converting the images to [HLS](https://en.wikipedia.org/wiki/HSL_and_HSV) provided the greatest improvement. This is one of the recorded images in RGB and HLS (displayed hue displayed as red, lightness as green, saturation as blue):
 
 ![rgb and hls](writeup-assets/rgb_hls.jpg)
 
@@ -56,13 +56,16 @@ I also cropped the bottom and top of the images to get rig of the front of the c
 
 ![cropping](writeup-assets/crop.png)
 
-Additionally images are resized to 25% of their size (20,80,3) and normalized to zero mean and unit variance (values -0.5...0.5).
+Images are resized to 25% of their size (20,80,3) and normalized to zero mean and unit variance (values -0.5...0.5).
 
-Statistics:
-* samples colleted: 4866
-* samples driving straight: 1068
-* images with steering: 3798
-* augmented samples: **9732**
+---
+
+### Statistics
+* samples colleted: 4,866
+* samples driving straight: 1,068
+* images with steering: 3,798
+* augmented samples: **9,732**
+* model trained for 16 epochs
 
 ---
 
@@ -144,11 +147,14 @@ Youtube video:
 
 I wanted to improve on my initial result because the car was not driving very smoothly. I collected additional driving data by driving the car around the track an additional time.
 
-Sample statistics:
+---
+
+### Statistics
 * samples colleted: 7,540
 * samples driving straight: 1,957
 * images with steering: 5,583
 * augmented samples: **15,080**
+* model trained for 17 epochs
 
 I also added another convolutional layer and dropouts after each convolution. My revised model:
 
@@ -196,7 +202,7 @@ Youtube video:
 
 ### Challenges
 
-Track 2 is more challenging because the turns are sharper, the track is longer, there track changes to deep downhill sections where the camera can't see the road and there are more dynamic lighting situation.
+Track 2 is more challenging because the turns are sharper, the track is longer, there track changes to deep downhill sections where the camera can't see the road and there are more dynamic lighting situations.
 
 Due to my lacking experience with the game controller I collected data with the car running at 15 mph.
 
@@ -206,19 +212,19 @@ Due to my lacking experience with the game controller I collected data with the 
 
 #### Shadows
 
-There are lighting scenarios where part or all of the track is in shadow. I've used CLAHE ([Contrast Limited Adaptive Histogram Equalization](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization)) on the lightness channel to minimize the affect of shadows.
+There are lighting scenarios where part or all of the track is in shadow. I have used CLAHE ([Contrast Limited Adaptive Histogram Equalization](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization)) on the lightness channel to minimize the affect of shadows.
 
 ![lightness](writeup-assets/L.png)
 
-lighness channel
+*lighness channel*
 
 ![lightness with clahe](writeup-assets/L_CLAHE.png)
 
-lighness channel with CLAHE applied
+*lighness channel with CLAHE applied*
 
 #### Roadside Distractions
 
-There are a lot of distracting features on the sides of the road, for example trees. To minimize this I have use a projection transformation to "un-tilt" the images:
+There are a lot of distracting features on the sides, for example trees. To minimize this I have use a projection transformation to "un-tilt" the images:
 
 ![untilt](writeup-assets/untilt.png)
 
@@ -226,15 +232,68 @@ There are a lot of distracting features on the sides of the road, for example tr
 
 NVIDIA's [End-to-End Deep Learning for Self-Driving Cars](https://devblogs.nvidia.com/parallelforall/deep-learning-self-driving-cars/) article mentions that they only use center lane driving samples. To make that sure I am training the model on good data, I wrote a small python program to play through the samples and tag samples to use or ignore.
 
-The **tag_data.py** script loads a folder of samples recorded by the simulator and displays the frames, frame numbers and steering angle in a window. The frames can be played forward and back (**left** and **right** arrow keys) and tagged for use (**up** arrow) or ignore (**down** arrow).
+The **tag_data.py** script loads a folder of samples recorded by the simulator and displays the frames, frame numbers and steering values in a window. The frames can be played forward and back (**left** and **right arrow** keys) and tagged for use (**up arrow**) or ignore (**down arrow**).
 
 The bottom bar's color indicates if a frame should be used: red for good data and gray for the sample to be ignored.
 
-The **return** key saves a driving_log_marked.csv file that has an extra boolean attribute.
+The **return** key saves a driving_log_marked.csv file that has an extra boolean attribute to indicate if the sample should be used.
 
 ![data tagger](writeup-assets/data_tagger.jpg)
 
-The left image (frame 0, steering angle 0) should be ignored, the right image (frame 96, steering angle 0.8) should be used.
+*the left image (frame 0, steering value 0) is ignored, the right image (frame 96, steering value 0.8) is used*
+
+#### Side Cameras
+
+The simulator records images from 3 cameras: center, left, right.
+
+I used the images from the side cameras with a steering offset. The center cameras's steering value for the left camera's are increased by 0.2, the right cameras reduced by 0.2.
+
+![center](writeup-assets/center.jpg)
+
+*center camera, steering value 0.3*
+
+![left](writeup-assets/left.jpg)
+
+*left camera, steering value 0.3+0.2=0.5*
+
+![right](writeup-assets/right.jpg)
+
+*right camera, steering value 0.3-0.2=0.1*
+
+#### Samples While Autonomous
+
+There were some tricky turns where the car got into trouble no matter how many clips I recorder in training mode.
+
+![tricky](writeup-assets/tricky.jpg)
+
+*in this turn the camera can't see the road because it turns and descends*
+
+For these situations I recorded images in autonomous mode and assigned a steering value that seemed appropriate.
+
+#### Data Augmentation
+
+The following images were added to the training set:
+
+If the steering value is close to zero:
+* left camera, steering value of 0.065
+* right camera, steering value -0.065
+
+If the magnitude of steering value is greater than zero:
+* center camera, steering value as recorded
+* center camera flipped horizontally, steering value negated
+* left camera, steering value + 0.2
+* left camera flipped, -(steering value + 0.2)
+* right camera, steering value - 0.2
+* right camera flipped, -(steering value - 0.2)
+
+---
+
+### Statistics
+* samples colleted: 16,477
+* samples driving straight: 2,772
+* images with steering: 13,705
+* augmented samples: **87,774**
+* model trained for 34 epochs
 
 ---
 
@@ -272,4 +331,40 @@ My final model architecture:
 
 ---
 
+### Results
 
+The assets are located in the **track2** folder:
+* **clone.py** - model training
+* **drive.py** - steering prediction for simulator
+* **preprocess.py** - image preprocessing used by clone.py and drive.py
+* **tag_data.py** - script for tagging samples
+* **model.h5** - keras model data
+* **track2_15.mp4** - screen recording from simulator at 15mph
+* **track2_20.mp4** - screen recording from simulator at 20mph
+* **track2_25.mp4** - screen recording from simulator at 25mph
+
+---
+
+Youtube video driving at 15mph, the driving samples were recorded at this speed:
+
+[![track2 @15mph](./writeup-assets/track2_15.png)](https://youtu.be/ztb1CK3CLtU "track2 @15mph")
+
+---
+
+Youtube video driving at 20mph, this is 33% faster than the sample collection speed. The car oversteers, but is able to recover:
+
+[![track2 @20mph](./writeup-assets/track2_20.png)](https://youtu.be/YaDN41ilTG4 "track2 @20mph")
+
+---
+
+Youtube video driving at 20mph, this is 66% faster than the sample collection speed. The car oversteers even more, but it stays on the road. This is the highest speed this model can drive:
+
+[![track2 @25mph](./writeup-assets/track2_25.png)](https://youtu.be/0NYE1wGkuz0 "track2 @25mph")
+
+---
+
+### Github Repo of Project
+
+[lajos/CarND-Behavioral-Cloning-P3](https://github.com/lajos/CarND-Behavioral-Cloning-P3)
+
+---
