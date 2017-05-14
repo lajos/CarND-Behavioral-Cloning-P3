@@ -288,6 +288,13 @@ If the magnitude of steering value is greater than zero:
 
 ---
 
+### Data Collection
+
+* 4 laps around the track
+* 20 recovery clips
+
+---
+
 ### Statistics
 * samples colleted: 16,477
 * samples driving straight: 2,772
